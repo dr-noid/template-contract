@@ -8,8 +8,8 @@ describe("TemplateContract", async function () {
   let contract;
   let owner;
   let signer1;
-  let signers;
   let signer2;
+  let signers;
 
   const contractName = config.contractName;
   const name = config.name;
@@ -83,6 +83,53 @@ describe("TemplateContract", async function () {
       await expect(contract.mint(amountToMint)).to.be.revertedWith(
         "Quantity is too large"
       );
+    });
+
+    it("shouldn't allow minting over the collectionSize", async function () {
+      // We deploy the contract again but this time the maxMintPerTx
+      // is set to the collectionSize so the test runs faster
+      const customContract = await Contract.deploy(
+        name,
+        symbol,
+        price,
+        collectionSize,
+        collectionSize
+      );
+      await customContract.deployed();
+
+      const customSignerContract = await customContract.connect(signer1);
+
+      const overrides = function (amount) {
+        return { value: BigNumber.from(price).mul(amount) };
+      };
+
+      let x = await customContract.totalSupply();
+      console.log(`x: ${x}`);
+
+      await customSignerContract.mint(
+        collectionSize,
+        overrides(collectionSize)
+      );
+
+      x = await customContract.totalSupply();
+      console.log(`x: ${x}`);
+
+      await customSignerContract.mint(1, overrides(1));
+
+      x = await customContract.totalSupply();
+      console.log(`x: ${x}`);
+
+      // const amountOfMints = Math.floor(collectionSize / maxMintPerTx);
+      // const restMint = collectionSize % maxMintPerTx;
+      // const mintPerTx = BigNumber.from(maxMintPerTx);
+
+      // for (let i = 0; i < amountOfMints; i++) {
+      //   await signerContract.mint(mintPerTx, overrides(mintPerTx));
+      //   console.log(await signerContract.totalSupply());
+      // }
+      // if (restMint !== 0) {
+      //   await signerContract.mint(restMint, overrides(restMint));
+      // }
     });
   });
 

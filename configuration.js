@@ -7,8 +7,8 @@ const contractName = `${env.contractName}`;
 const name = `${env.name}`;
 const symbol = `${env.symbol}`;
 const price = BigNumber.from(`${env.price}`);
-const maxMintPerTx = `${env.maxMintPerTx}`;
-const collectionSize = `${env.collectionSize}`;
+const maxMintPerTx = BigNumber.from(`${env.maxMintPerTx}`);
+const collectionSize = BigNumber.from(`${env.collectionSize}`);
 
 module.exports = {
   contractName: contractName,
