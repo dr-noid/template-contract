@@ -1,6 +1,6 @@
-contractName=TestContract
-name=Test
-symbol=TEST
+contractName=TemplateContract
+name=Template
+symbol=TMPLT
 price=80000000000000000
 maxMintPerTx=5
 collectionSize=5000

@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
+const config = require("../configuration");
 
 describe("TemplateContract", async function () {
   let Contract;
@@ -10,14 +11,15 @@ describe("TemplateContract", async function () {
   let signers;
   let signer2;
 
-  const name = "TemplateContract";
-  const symbol = "TC";
-  const price = BigNumber.from("80000000000000000");
-  const maxMintPerTx = 10;
-  const collectionSize = 2000;
+  const contractName = config.contractName;
+  const name = config.name;
+  const symbol = config.symbol;
+  const price = config.price;
+  const maxMintPerTx = config.maxMintPerTx;
+  const collectionSize = config.collectionSize;
 
   beforeEach(async function () {
-    Contract = await ethers.getContractFactory(name);
+    Contract = await ethers.getContractFactory(contractName);
     [owner, signer1, signer2, ...signers] = await ethers.getSigners();
     contract = await Contract.deploy(
       name,
@@ -41,17 +43,38 @@ describe("TemplateContract", async function () {
   });
 
   describe("Minting", async function () {
-    it("mint from owner wallet", async function () {
+    let signerContract;
+
+    beforeEach(async function () {
+      signerContract = await contract.connect(signer1);
+    });
+
+    it("mint from owner wallet with correct amount of eth", async function () {
       const amountToMint = BigNumber.from(3);
-      await contract.mint(amountToMint);
+      const overrides = {
+        value: BigNumber.from(price).mul(amountToMint),
+      };
+      await contract.mint(amountToMint, overrides);
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
-    it("mint from different address", async function () {
+    it("mint with correct amount of eth", async function () {
       const amountToMint = BigNumber.from(3);
-      const newContract = await contract.connect(signer1);
-      await newContract.mint(amountToMint);
+      const overrides = {
+        value: BigNumber.from(price).mul(amountToMint),
+      };
+      await signerContract.mint(amountToMint, overrides);
       expect(await contract.balanceOf(signer1.address)).to.equal(amountToMint);
+    });
+
+    it("revert when minting with too little eth", async function () {
+      const amountToMint = BigNumber.from(2);
+      const overrides = {
+        value: BigNumber.from(price).mul(amountToMint - 1),
+      };
+      await expect(
+        signerContract.mint(amountToMint, overrides)
+      ).to.be.revertedWith("Sent Ether is too low");
     });
 
     it("shouldn't allow minting over the maxMintPerTx", async function () {
@@ -67,7 +90,7 @@ describe("TemplateContract", async function () {
     // We need atleast one token to transfer
     const tokenId = 1;
     beforeEach(async function () {
-      await contract.mint(tokenId);
+      await contract.mint(tokenId, { value: price });
     });
 
     // Transfering is handled almost completely by the ERC721A contract.
@@ -83,13 +106,6 @@ describe("TemplateContract", async function () {
       expect(await contract.free()).to.equal(false);
       await contract.setFree(true);
       expect(await contract.free()).to.equal(true);
-    });
-
-    it("should not change if a non-owner tries seeing the value", async function () {
-      newContract = await contract.connect(signer1);
-      await expect(newContract.setFree()).to.be.revertedWith(
-        "Ownable: caller is not the owner"
-      );
     });
 
     it("should revert if not changing the value", async function () {

@@ -34,7 +34,7 @@ contract TemplateContract is ERC721A, Ownable {
     // Minting & Transfering
     function mint(uint256 _quantity) external payable {
         require(_quantity <= maxMintPerTx, "Quantity is too large"); // Cannot mint more than maxMintPerTx
-        require(msg.value >= price, "Sent Ether is too low");
+        require(msg.value >= price * _quantity, "Sent Ether is too low");
 
         _safeMint(msg.sender, _quantity);
     }
