@@ -45,44 +45,38 @@ describe("TemplateContract", async function () {
   describe("Minting", async function () {
     let signerContract;
 
+    const overrides = function (amount) {
+      return { value: BigNumber.from(price).mul(amount) };
+    };
+
     beforeEach(async function () {
       signerContract = await contract.connect(signer1);
     });
 
     it("mint from owner wallet with correct amount of eth", async function () {
       const amountToMint = BigNumber.from(3);
-      const overrides = {
-        value: BigNumber.from(price).mul(amountToMint),
-      };
-      await contract.mint(amountToMint, overrides);
+      await contract.mint(amountToMint, overrides(amountToMint));
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
     it("mint with correct amount of eth", async function () {
       const amountToMint = BigNumber.from(3);
-      const overrides = {
-        value: BigNumber.from(price).mul(amountToMint),
-      };
-      await signerContract.mint(amountToMint, overrides);
+      await signerContract.mint(amountToMint, overrides(amountToMint));
       expect(await contract.balanceOf(signer1.address)).to.equal(amountToMint);
     });
 
     it("revert when minting with too little eth", async function () {
       const amountToMint = BigNumber.from(2);
-      const overrides = {
-        value: BigNumber.from(price).mul(amountToMint - 1),
-      };
       await expect(
-        signerContract.mint(amountToMint, overrides)
+        signerContract.mint(amountToMint, overrides(amountToMint.sub(1)))
       ).to.be.revertedWith("Sent Ether is too low");
     });
 
     it("shouldn't allow minting over the maxMintPerTx", async function () {
-      let amountToMint = maxMintPerTx + 1;
-
-      await expect(contract.mint(amountToMint)).to.be.revertedWith(
-        "Quantity is too large"
-      );
+      const amountToMint = maxMintPerTx + 1;
+      await expect(
+        contract.mint(amountToMint, overrides(amountToMint))
+      ).to.be.revertedWith("Quantity is too large");
     });
 
     it("shouldn't allow minting over the collectionSize", async function () {
@@ -99,37 +93,14 @@ describe("TemplateContract", async function () {
 
       const customSignerContract = await customContract.connect(signer1);
 
-      const overrides = function (amount) {
-        return { value: BigNumber.from(price).mul(amount) };
-      };
-
-      let x = await customContract.totalSupply();
-      console.log(`x: ${x}`);
-
       await customSignerContract.mint(
         collectionSize,
         overrides(collectionSize)
       );
 
-      x = await customContract.totalSupply();
-      console.log(`x: ${x}`);
-
-      await customSignerContract.mint(1, overrides(1));
-
-      x = await customContract.totalSupply();
-      console.log(`x: ${x}`);
-
-      // const amountOfMints = Math.floor(collectionSize / maxMintPerTx);
-      // const restMint = collectionSize % maxMintPerTx;
-      // const mintPerTx = BigNumber.from(maxMintPerTx);
-
-      // for (let i = 0; i < amountOfMints; i++) {
-      //   await signerContract.mint(mintPerTx, overrides(mintPerTx));
-      //   console.log(await signerContract.totalSupply());
-      // }
-      // if (restMint !== 0) {
-      //   await signerContract.mint(restMint, overrides(restMint));
-      // }
+      await expect(
+        customSignerContract.mint(1, overrides(1))
+      ).to.be.revertedWith("Collection is full");
     });
   });
 
