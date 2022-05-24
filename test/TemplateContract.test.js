@@ -18,6 +18,10 @@ describe("TemplateContract", async function () {
   const maxMintPerTx = config.maxMintPerTx;
   const collectionSize = config.collectionSize;
 
+  const overrides = function (amount) {
+    return { value: BigNumber.from(price).mul(amount) };
+  };
+
   beforeEach(async function () {
     Contract = await ethers.getContractFactory(contractName);
     [owner, signer1, signer2, ...signers] = await ethers.getSigners();
@@ -44,10 +48,6 @@ describe("TemplateContract", async function () {
 
   describe("Minting", async function () {
     let signerContract;
-
-    const overrides = function (amount) {
-      return { value: BigNumber.from(price).mul(amount) };
-    };
 
     beforeEach(async function () {
       signerContract = await contract.connect(signer1);
@@ -119,15 +119,50 @@ describe("TemplateContract", async function () {
     });
   });
 
+  describe("tokenURIs", async function () {
+    const testURI = "https://example.com/";
+    beforeEach(async function () {
+      // We need some tokens to get tokenURIs
+      await contract.mint(maxMintPerTx, overrides(maxMintPerTx));
+      await contract.setBaseURI(testURI);
+    });
+    it("get the correct URI for a given token", async function () {
+      const tokenId = 1;
+      expect(await contract.tokenURI(tokenId)).to.equal(`${testURI}${tokenId}`);
+    });
+  });
+
   describe("Utils", async function () {
-    it("should change the value correctly", async function () {
-      expect(await contract.free()).to.equal(false);
+    it("should change the free state", async function () {
       await contract.setFree(true);
       expect(await contract.free()).to.equal(true);
     });
-
-    it("should revert if not changing the value", async function () {
+    it("should revert if not changing the free state", async function () {
       await expect(contract.setFree(false)).to.be.revertedWith(
+        "Already set to this value"
+      );
+    });
+
+    it("should change the price", async function () {
+      const newPrice = ethers.utils.parseEther("0.1");
+      await contract.setPrice(newPrice);
+
+      expect(await contract.price()).to.equal(newPrice);
+    });
+    it("should revert if not changing the price", async function () {
+      await expect(contract.setPrice(price)).to.be.revertedWith(
+        "Already set to this value"
+      );
+    });
+
+    it("should change maxMintPerTx", async function () {
+      const newMaxPerTx = 10;
+      await contract.setMaxMintPerTx(newMaxPerTx);
+
+      expect(await contract.maxMintPerTx()).to.equal(newMaxPerTx);
+    });
+    it("should revert if not changing the maxMintPerTx", async function () {
+      await expect(contract.setMaxMintPerTx(maxMintPerTx)).to.be.revertedWith(
         "Already set to this value"
       );
     });

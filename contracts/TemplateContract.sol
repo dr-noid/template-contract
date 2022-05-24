@@ -10,6 +10,7 @@ contract TemplateContract is ERC721A, Ownable {
     uint256 public maxMintPerTx;
     uint256 public immutable collectionSize;
     bool public free = false;
+    string public baseUri;
 
     constructor(
         string memory _name,
@@ -25,6 +26,7 @@ contract TemplateContract is ERC721A, Ownable {
 
     // Events
     event PriceChanged(uint256 newPrice);
+    event MaxMintPerTxChanged(uint256 newMaxMintPerTx);
 
     // ERC721A starts counting tokenIds from 0, this contract starts from 1
     function _startTokenId() internal pure override returns (uint256) {
@@ -47,16 +49,34 @@ contract TemplateContract is ERC721A, Ownable {
         transferFrom(msg.sender, _to, _tokenId);
     }
 
+    // TokenURIs
+    function _baseURI() internal view override returns (string memory) {
+        return baseUri;
+    }
+
     // Utils
     function setFree(bool _value) external onlyOwner {
         require(free != _value, "Already set to this value");
         free = _value;
     }
 
-    function changePrice(uint256 _newPrice) external onlyOwner {
+    function setPrice(uint256 _newPrice) external onlyOwner {
         require(price != _newPrice, "Already set to this value");
         price = _newPrice;
 
         emit PriceChanged(_newPrice);
+    }
+
+    function setMaxMintPerTx(uint256 _newMaxMintPerTx) external onlyOwner {
+        require(maxMintPerTx != _newMaxMintPerTx, "Already set to this value");
+        maxMintPerTx = _newMaxMintPerTx;
+
+        emit MaxMintPerTxChanged(_newMaxMintPerTx);
+    }
+
+    function setBaseURI(string memory _newBaseURI) external onlyOwner {
+        // We don't bother checking if the URI is already set to this value
+        // It's just unnecessary gas usage as the owner can check this manually
+        baseUri = _newBaseURI;
     }
 }
