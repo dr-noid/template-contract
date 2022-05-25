@@ -79,7 +79,7 @@ contract TemplateContract is ERC721A, Ownable {
         emit MaxMintPerTxChanged(_newMaxMintPerTx);
     }
 
-    function setBaseURI(string memory _newBaseURI) external onlyOwner {
+    function setBaseURI(string calldata _newBaseURI) external onlyOwner {
         // We don't bother checking if the URI is already set to this value
         // It's just unnecessary gas usage as the owner can check this manually
         baseUri = _newBaseURI;
