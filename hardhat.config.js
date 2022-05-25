@@ -11,7 +11,7 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.9",
+  solidity: "0.8.11",
   networks: {
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
