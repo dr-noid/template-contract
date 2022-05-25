@@ -138,16 +138,6 @@ describe("TemplateContract", async function () {
   });
 
   describe("Utils", async function () {
-    it("should change the free state", async function () {
-      await contract.setFree(true);
-      expect(await contract.free()).to.equal(true);
-    });
-    it("should revert if not changing the free state", async function () {
-      await expect(contract.setFree(false)).to.be.revertedWith(
-        "Already set to this value"
-      );
-    });
-
     it("should change the price", async function () {
       const newPrice = ethers.utils.parseEther("0.1");
       await contract.setPrice(newPrice);

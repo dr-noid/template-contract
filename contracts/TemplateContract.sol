@@ -4,13 +4,11 @@ pragma solidity ^0.8.0;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract TemplateContract is ERC721A, Ownable {
     uint256 public price;
     uint256 public maxMintPerTx;
     uint256 public immutable collectionSize;
-    bool public free = false;
     string public baseUri;
 
     constructor(
@@ -29,18 +27,10 @@ contract TemplateContract is ERC721A, Ownable {
     event PriceChanged(uint256 newPrice);
     event MaxMintPerTxChanged(uint256 newMaxMintPerTx);
 
-    // ERC721A starts counting tokenIds from 0, this contract starts from 1
-    function _startTokenId() internal pure override returns (uint256) {
-        return 1;
-    }
-
     // Minting & Transfering
     function mint(uint256 _quantity) external payable {
-        // uint256 maxMintPerTx_ = maxMintPerTx;
-        // uint256 price_ = price;
-
         unchecked {
-            require(_quantity <= maxMintPerTx, "Quantity is too large"); // Cannot mint more than maxMintPerTx
+            require(_quantity <= maxMintPerTx, "Quantity is too large");
             require(msg.value >= price * _quantity, "Sent Ether is too low");
             require(
                 totalSupply() + _quantity <= collectionSize,
@@ -61,11 +51,6 @@ contract TemplateContract is ERC721A, Ownable {
     }
 
     // Utils
-    function setFree(bool _value) external onlyOwner {
-        require(free != _value, "Already set to this value");
-        free = _value;
-    }
-
     function setPrice(uint256 _newPrice) external onlyOwner {
         require(price != _newPrice, "Already set to this value");
         price = _newPrice;
@@ -89,5 +74,28 @@ contract TemplateContract is ERC721A, Ownable {
     function withdrawMoney() external onlyOwner {
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         require(success, "Transfer failed.");
+    }
+
+    // Overrides from ERC721A
+    // ERC721A starts counting tokenIds from 0, this contract starts from 1
+    function _startTokenId() internal pure override returns (uint256) {
+        return 1;
+    }
+
+    // ERC721A has no file extensions for its tokenURIs
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+        string memory baseURI = _baseURI();
+        return
+            bytes(baseURI).length != 0
+                ? string(abi.encodePacked(baseURI, _toString(tokenId)))
+                : ".json";
     }
 }
