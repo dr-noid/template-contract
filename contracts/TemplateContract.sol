@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract TemplateContract is ERC721A, Ownable {
     uint256 public price;
@@ -83,5 +84,10 @@ contract TemplateContract is ERC721A, Ownable {
         // We don't bother checking if the URI is already set to this value
         // It's just unnecessary gas usage as the owner can check this manually
         baseUri = _newBaseURI;
+    }
+
+    function withdrawMoney() external onlyOwner {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        require(success, "Transfer failed.");
     }
 }

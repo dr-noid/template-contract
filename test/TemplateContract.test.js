@@ -102,6 +102,11 @@ describe("TemplateContract", async function () {
         customSignerContract.mint(1, overrides(1))
       ).to.be.revertedWith("Collection is full");
     });
+
+    it("should allow minting for free when it's enabled", async function () {
+      await contract.setPrice(0);
+      await contract.mint(1);
+    });
   });
 
   describe("Transfering", async function () {
@@ -164,6 +169,15 @@ describe("TemplateContract", async function () {
     it("should revert if not changing the maxMintPerTx", async function () {
       await expect(contract.setMaxMintPerTx(maxMintPerTx)).to.be.revertedWith(
         "Already set to this value"
+      );
+    });
+
+    it("should send eth to the owner wallet", async function () {
+      await contract.mint(1, overrides(1));
+
+      await expect(await contract.withdrawMoney()).to.changeEtherBalances(
+        [contract, owner],
+        [price.mul(-1), price]
       );
     });
   });
