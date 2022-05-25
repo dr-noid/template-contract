@@ -1,9 +1,8 @@
 const { ethers } = require("hardhat");
-const { BigNumber } = require("ethers");
-const config = require("./configuration");
+const config = require("../configuration");
 
 async function main() {
-  const TemplateContract = await ethers.getContractFactory(name);
+  const TemplateContract = await ethers.getContractFactory(config.contractName);
   const contract = await TemplateContract.deploy(
     config.name,
     config.symbol,
