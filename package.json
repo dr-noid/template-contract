@@ -1,7 +1,7 @@
 {
   "name": "templatecontract",
   "version": "1.0.0",
-  "description": "",
+  "description": "#### You only have to specify `6` different settings to get a working [ERC721A](https://github.com/chiru-labs/ERC721A) Smart Contract!",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,5 +19,16 @@
     "hardhat-gas-reporter": "^1.0.8",
     "prettier": "^2.6.2",
     "prettier-plugin-solidity": "^1.0.0-beta.19"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dr-noid/TemplateContract.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dr-noid/TemplateContract/issues"
+  },
+  "homepage": "https://github.com/dr-noid/TemplateContract#readme"
 }
