@@ -133,7 +133,10 @@ describe("TemplateContract", async function () {
     });
     it("get the correct URI for a given token", async function () {
       const tokenId = 1;
-      expect(await contract.tokenURI(tokenId)).to.equal(`${testURI}${tokenId}`);
+      console.log(await contract.tokenURI(tokenId));
+      expect(await contract.tokenURI(tokenId)).to.equal(
+        `${testURI}${tokenId}.json`
+      );
     });
   });
 
