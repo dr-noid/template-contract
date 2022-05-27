@@ -17,4 +17,5 @@ module.exports = {
   price: price,
   maxMintPerTx: maxMintPerTx,
   collectionSize: collectionSize,
+  constructorArgs: [name, symbol, price, maxMintPerTx, collectionSize],
 };
