@@ -10,6 +10,7 @@ contract TemplateContract is ERC721A, Ownable {
     uint256 public maxMintPerTx;
     uint256 public immutable collectionSize;
     string public baseUri;
+    bool public open = false;
 
     constructor(
         string memory _name,
@@ -30,6 +31,7 @@ contract TemplateContract is ERC721A, Ownable {
     // Minting & Transfering
     function mint(uint256 _quantity) external payable {
         unchecked {
+            require(open, "Minting has not started yet");
             require(_quantity <= maxMintPerTx, "Quantity is too large");
             require(msg.value >= price * _quantity, "Sent Ether is too low");
             require(
@@ -74,6 +76,10 @@ contract TemplateContract is ERC721A, Ownable {
     function withdrawMoney() external onlyOwner {
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         require(success, "Transfer failed.");
+    }
+
+    function setOpen(bool _value) external onlyOwner {
+        open = _value;
     }
 
     // Overrides from ERC721A

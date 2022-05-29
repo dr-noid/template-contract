@@ -18,6 +18,7 @@ describe("Gas Usage Tests", async function () {
   context("Mint one, 1000 times", async function () {
     before(async function () {
       this.contract = await deployContract(config.contractName);
+      this.contract.setOpen(true);
       [, ...signers] = await ethers.getSigners();
       this.signers = signers;
     });

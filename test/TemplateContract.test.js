@@ -33,6 +33,7 @@ describe("TemplateContract", async function () {
       collectionSize
     );
     await contract.deployed();
+    await contract.setOpen(true);
   });
 
   describe("Deployment", async function () {
@@ -90,6 +91,7 @@ describe("TemplateContract", async function () {
         collectionSize
       );
       await customContract.deployed();
+      await customContract.setOpen(true);
 
       const customSignerContract = await customContract.connect(signer1);
 
@@ -171,6 +173,13 @@ describe("TemplateContract", async function () {
       await expect(await contract.withdrawMoney()).to.changeEtherBalances(
         [contract, owner],
         [price.mul(-1), price]
+      );
+    });
+
+    it("minting not allowed if closed", async function () {
+      await contract.setOpen(false);
+      await expect(contract.mint(1, overrides(1))).to.be.revertedWith(
+        "Minting has not started yet"
       );
     });
   });
