@@ -24,6 +24,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
+      mainnet: `${ETHERSCAN_API_KEY}`,
       rinkeby: `${ETHERSCAN_API_KEY}`,
     },
   },
