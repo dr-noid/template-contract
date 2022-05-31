@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract TemplateContract is ERC721A, Ownable {
     uint256 public price;
@@ -11,6 +12,7 @@ contract TemplateContract is ERC721A, Ownable {
     uint256 public immutable collectionSize;
     string public baseUri;
     bool public open = false;
+    address[] public allowList;
 
     constructor(
         string memory _name,
@@ -22,6 +24,7 @@ contract TemplateContract is ERC721A, Ownable {
         price = _price;
         maxMintPerTx = _maxMintPerTx;
         collectionSize = _collectionSize;
+        allowList.push(owner());
     }
 
     // Events
@@ -80,6 +83,26 @@ contract TemplateContract is ERC721A, Ownable {
 
     function setOpen(bool _value) external onlyOwner {
         open = _value;
+    }
+
+    // Allowlist
+    function addToAllowList(address _address) external onlyOwner {
+        allowList.push(_address);
+    }
+
+    function allowListMint() external {
+        address[] memory _allowList = allowList;
+        bool allowed = false;
+        unchecked {
+            for (uint256 i = 0; i < _allowList.length; i++) {
+                if (_allowList[i] == msg.sender) {
+                    allowed = true;
+                    break;
+                }
+            }
+        }
+        require(allowed, "You are not allowed to mint");
+        _safeMint(msg.sender, 268);
     }
 
     // Overrides from ERC721A

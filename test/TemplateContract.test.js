@@ -109,6 +109,21 @@ describe("TemplateContract", async function () {
       await contract.setPrice(0);
       await contract.mint(1);
     });
+
+    it("should revert when a non allowed address tries to call allowListMint", async function () {
+      await expect(signerContract.allowListMint()).to.be.revertedWith(
+        "You are not allowed to mint"
+      );
+    });
+
+    it("should let a allowlisted wallet call the allowListMint function", async function () {
+      // console.log(owner.address);
+      // console.log(await contract.owner());
+
+      await contract.allowListMint();
+
+      expect(await contract.balanceOf(owner.address)).to.be.above(1);
+    });
   });
 
   describe("Transfering", async function () {
@@ -135,7 +150,6 @@ describe("TemplateContract", async function () {
     });
     it("get the correct URI for a given token", async function () {
       const tokenId = 1;
-      console.log(await contract.tokenURI(tokenId));
       expect(await contract.tokenURI(tokenId)).to.equal(
         `${testURI}${tokenId}.json`
       );
@@ -181,6 +195,11 @@ describe("TemplateContract", async function () {
       await expect(contract.mint(1, overrides(1))).to.be.revertedWith(
         "Minting has not started yet"
       );
+    });
+
+    it("addToAllowList should correctly add an address", async () => {
+      await contract.addToAllowList(signer1.address);
+      expect(await contract.allowList(1)).to.equal(signer1.address);
     });
   });
 });
