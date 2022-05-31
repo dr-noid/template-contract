@@ -11,7 +11,15 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.11",
+  solidity: {
+    version: "0.8.9",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 500, // collectionSize/maxMintPerTx would be the optimal runs value
+      },
+    },
+  },
   networks: {
     mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
