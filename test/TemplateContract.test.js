@@ -114,6 +114,11 @@ describe("TemplateContract", async function () {
       await contract.allowlistMint(amountToMint);
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
+
+    it("minting less than the maxFree limit shouldn't fail", async function () {
+      await contract.setMaxFree(3);
+      await contract.mint(1);
+    });
   });
 
   describe("Transfering", async function () {

@@ -99,6 +99,11 @@ contract TemplateContract is ERC721A, Ownable {
         open = _value;
     }
 
+    function setMaxFree(uint256 _newMaxFree) external onlyOwner {
+        require(maxFree != _newMaxFree, "Already set to this value");
+        maxFree = _newMaxFree;
+    }
+
     // Allowlist
     function addToAllowlist(address _address) external onlyOwner {
         allowlist.push(_address);
