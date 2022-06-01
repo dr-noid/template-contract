@@ -12,7 +12,9 @@ contract TemplateContract is ERC721A, Ownable {
     uint256 public immutable collectionSize;
     string public baseUri;
     bool public open = false;
-    address[] public allowList;
+    address[] public allowlist;
+    mapping(address => bool) public hasMinted;
+    uint256 maxFree = 2;
 
     constructor(
         string memory _name,
@@ -24,7 +26,7 @@ contract TemplateContract is ERC721A, Ownable {
         price = _price;
         maxMintPerTx = _maxMintPerTx;
         collectionSize = _collectionSize;
-        allowList.push(owner());
+        allowlist.push(owner());
     }
 
     // Events
@@ -33,17 +35,37 @@ contract TemplateContract is ERC721A, Ownable {
 
     // Minting & Transfering
     function mint(uint256 _quantity) external payable {
-        unchecked {
-            require(open, "Minting has not started yet");
-            require(_quantity <= maxMintPerTx, "Quantity is too large");
-            require(msg.value >= price * _quantity, "Sent Ether is too low");
-            require(
-                totalSupply() + _quantity <= collectionSize,
-                "Collection is full"
-            );
-        }
+        require(open, "Minting has not started yet");
+        require(_quantity <= maxMintPerTx, "Quantity is too large");
+        require(_quantity > 0, "Must mint at least 1 token");
+        require(
+            _totalMinted() + _quantity <= collectionSize,
+            "Collection is full"
+        );
 
-        _safeMint(msg.sender, _quantity);
+        if (hasMinted[msg.sender]) {
+            unchecked {
+                require(
+                    msg.value >= _quantity * price,
+                    "Sent Ether is too low"
+                );
+                _safeMint(msg.sender, _quantity);
+            }
+        } else {
+            unchecked {
+                if (_quantity <= maxFree) {
+                    _safeMint(msg.sender, _quantity);
+                    hasMinted[msg.sender] = true;
+                    return;
+                }
+                if (_quantity > maxFree) {
+                    require(msg.value >= (_quantity - maxFree) * price);
+                    _safeMint(msg.sender, _quantity);
+                    hasMinted[msg.sender] = true;
+                    return;
+                }
+            }
+        }
     }
 
     function transfer(address _to, uint256 _tokenId) external {
@@ -86,23 +108,27 @@ contract TemplateContract is ERC721A, Ownable {
     }
 
     // Allowlist
-    function addToAllowList(address _address) external onlyOwner {
-        allowList.push(_address);
+    function addToAllowlist(address _address) external onlyOwner {
+        allowlist.push(_address);
     }
 
-    function allowListMint() external {
-        address[] memory _allowList = allowList;
+    function allowlistMint(uint256 _quantity) external {
+        address[] memory _allowlist = allowlist;
         bool allowed = false;
         unchecked {
-            for (uint256 i = 0; i < _allowList.length; i++) {
-                if (_allowList[i] == msg.sender) {
+            for (uint256 i = 0; i < _allowlist.length; i++) {
+                if (_allowlist[i] == msg.sender) {
                     allowed = true;
                     break;
                 }
             }
         }
         require(allowed, "You are not allowed to mint");
-        _safeMint(msg.sender, 268);
+        require(
+            _totalMinted() + _quantity <= collectionSize,
+            "Collection is full"
+        );
+        _safeMint(msg.sender, _quantity);
     }
 
     // Overrides from ERC721A
