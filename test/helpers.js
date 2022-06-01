@@ -9,9 +9,11 @@ const mint = async function (contract, amount) {
   await contract.mint(amount, overrides(amount));
 };
 
-const deployContract = async function (contractName) {
-  const factory = await ethers.getContractFactory(contractName);
-  let contract = await factory.deploy(...(config.constructorArgs || []));
+const deployContract = async function (constructorArgs) {
+  const factory = await ethers.getContractFactory(config.contractName);
+  let contract = await factory.deploy(
+    ...(constructorArgs || config.constructorArgs || [])
+  );
   await contract.deployed();
   return contract;
 };

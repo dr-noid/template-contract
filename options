@@ -4,3 +4,4 @@ symbol=TMPLT
 price=80000000000000000
 maxMintPerTx=5
 collectionSize=5000
+maxFree=2

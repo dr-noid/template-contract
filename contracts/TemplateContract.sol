@@ -12,20 +12,23 @@ contract TemplateContract is ERC721A, Ownable {
     uint256 public immutable collectionSize;
     string public baseUri;
     bool public open = false;
+    uint256 public maxFree;
     address[] public allowlist;
+
     mapping(address => bool) public hasMinted;
-    uint256 maxFree = 2;
 
     constructor(
         string memory _name,
         string memory _symbol,
         uint256 _price,
         uint256 _maxMintPerTx,
-        uint256 _collectionSize
+        uint256 _collectionSize,
+        uint256 _maxFree
     ) ERC721A(_name, _symbol) {
         price = _price;
         maxMintPerTx = _maxMintPerTx;
         collectionSize = _collectionSize;
+        maxFree = _maxFree;
         allowlist.push(owner());
     }
 
@@ -33,7 +36,7 @@ contract TemplateContract is ERC721A, Ownable {
     event PriceChanged(uint256 newPrice);
     event MaxMintPerTxChanged(uint256 newMaxMintPerTx);
 
-    // Minting & Transfering
+    // Minting
     function mint(uint256 _quantity) external payable {
         require(open, "Minting has not started yet");
         require(_quantity <= maxMintPerTx, "Quantity is too large");
@@ -43,16 +46,14 @@ contract TemplateContract is ERC721A, Ownable {
             "Collection is full"
         );
 
-        if (hasMinted[msg.sender]) {
-            unchecked {
+        unchecked {
+            if (hasMinted[msg.sender]) {
                 require(
                     msg.value >= _quantity * price,
                     "Sent Ether is too low"
                 );
                 _safeMint(msg.sender, _quantity);
-            }
-        } else {
-            unchecked {
+            } else {
                 if (_quantity <= maxFree) {
                     _safeMint(msg.sender, _quantity);
                     hasMinted[msg.sender] = true;
@@ -66,10 +67,6 @@ contract TemplateContract is ERC721A, Ownable {
                 }
             }
         }
-    }
-
-    function transfer(address _to, uint256 _tokenId) external {
-        transferFrom(msg.sender, _to, _tokenId);
     }
 
     // TokenURIs
@@ -98,11 +95,6 @@ contract TemplateContract is ERC721A, Ownable {
         baseUri = _newBaseURI;
     }
 
-    function withdrawMoney() external onlyOwner {
-        (bool success, ) = msg.sender.call{value: address(this).balance}("");
-        require(success, "Transfer failed.");
-    }
-
     function setOpen(bool _value) external onlyOwner {
         open = _value;
     }
@@ -110,6 +102,11 @@ contract TemplateContract is ERC721A, Ownable {
     // Allowlist
     function addToAllowlist(address _address) external onlyOwner {
         allowlist.push(_address);
+    }
+
+    function withdrawMoney() external onlyOwner {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        require(success, "Transfer failed.");
     }
 
     function allowlistMint(uint256 _quantity) external {

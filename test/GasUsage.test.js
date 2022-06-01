@@ -10,14 +10,14 @@ describe("Gas Usage Tests", async function () {
   context("Deploying gas usage:", async function () {
     it("Deploying gas usage:", async function () {
       for (let i = 0; i < 10; i++) {
-        deployContract(config.contractName);
+        deployContract();
       }
     });
   });
 
   context("Mint one, 1000 times", async function () {
     before(async function () {
-      this.contract = await deployContract(config.contractName);
+      this.contract = await deployContract();
       this.contract.setOpen(true);
       [, ...signers] = await ethers.getSigners();
       this.signers = signers;
@@ -33,7 +33,7 @@ describe("Gas Usage Tests", async function () {
 
   context(`Mint ${maxMintPerTx}, 100 times`, async function () {
     before(async function () {
-      this.contract = await deployContract(config.contractName);
+      this.contract = await deployContract();
       [, ...signers] = await ethers.getSigners();
       this.signers = signers;
     });
