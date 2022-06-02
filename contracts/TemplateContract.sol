@@ -38,13 +38,15 @@ contract TemplateContract is ERC721A, Ownable {
 
     // Minting
     function mint(uint256 _quantity) external payable {
-        require(open, "Minting has not started yet");
-        require(_quantity <= maxMintPerTx, "Quantity is too large");
-        require(_quantity > 0, "Must mint at least 1 token");
-        require(
-            _totalMinted() + _quantity <= collectionSize,
-            "Collection is full"
-        );
+        unchecked {
+            require(open, "Minting has not started yet");
+            require(_quantity <= maxMintPerTx, "Quantity is too large");
+            require(_quantity > 0, "Must mint at least 1 token");
+            require(
+                _totalMinted() + _quantity <= collectionSize,
+                "Collection is full"
+            );
+        }
 
         unchecked {
             if (hasMinted[msg.sender]) {
