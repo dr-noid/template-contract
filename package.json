@@ -4,7 +4,9 @@
   "description": "#### You only have to specify `6` different settings to get a working [ERC721A](https://github.com/chiru-labs/ERC721A) Smart Contract!",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx hardhat test",
+    "testdeploy": "npx hardhat run scripts/deploy.js --network rinkeby",
+    "testverify": "npx hardhat verify --network rinkeby --constructor-args arguments.js"
   },
   "keywords": [],
   "author": "",
