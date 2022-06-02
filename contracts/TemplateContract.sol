@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract TemplateContract is ERC721A, Ownable {
     uint256 public price;
@@ -14,8 +13,6 @@ contract TemplateContract is ERC721A, Ownable {
     bool public open = false;
     uint256 public maxFree;
     address[] public allowlist;
-
-    mapping(address => bool) public hasMinted;
 
     constructor(
         string memory _name,
