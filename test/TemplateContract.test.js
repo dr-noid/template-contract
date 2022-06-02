@@ -4,7 +4,7 @@ const { BigNumber } = require("ethers");
 const config = require("../configuration");
 const { deployContract } = require("./helpers");
 
-describe("TemplateContract", async function () {
+describe("TemplateContract", function () {
   let contract;
   let owner;
   let signer1;
@@ -21,7 +21,7 @@ describe("TemplateContract", async function () {
     await contract.setOpen(true);
   });
 
-  describe("Deployment", async function () {
+  describe("Deployment", function () {
     it("should set the correct state variables", async function () {
       expect(await contract.owner()).to.equal(owner.address);
       expect(await contract.name()).to.equal(config.name);
@@ -33,7 +33,7 @@ describe("TemplateContract", async function () {
     });
   });
 
-  describe("Minting", async function () {
+  describe("Minting", function () {
     let signerContract;
 
     beforeEach(async function () {
@@ -121,7 +121,7 @@ describe("TemplateContract", async function () {
     });
   });
 
-  describe("Transfering", async function () {
+  describe("Transfering", function () {
     // We need atleast one token to transfer
     const amountToMint = 1;
     beforeEach(async function () {
@@ -136,7 +136,7 @@ describe("TemplateContract", async function () {
     });
   });
 
-  describe("tokenURIs", async function () {
+  describe("tokenURIs", function () {
     const testURI = "https://example.com/";
     const amountToMint = 1;
     beforeEach(async function () {
@@ -151,7 +151,7 @@ describe("TemplateContract", async function () {
     });
   });
 
-  describe("Utils", async function () {
+  describe("Utils", function () {
     it("should change the price", async function () {
       const newPrice = ethers.utils.parseEther("0.1");
       await contract.setPrice(newPrice);
