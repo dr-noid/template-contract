@@ -36,8 +36,7 @@ contract TemplateContract is ERC721A, Ownable {
     event PriceChanged(uint256 newPrice);
     event MaxMintPerTxChanged(uint256 newMaxMintPerTx);
 
-    // Minting
-    function mint(uint256 _quantity) external payable {
+    modifier mintCompliance(uint256 _quantity) {
         unchecked {
             require(open, "Minting has not started yet");
             require(_quantity <= maxMintPerTx, "Quantity is too large");
@@ -47,28 +46,31 @@ contract TemplateContract is ERC721A, Ownable {
                 "Collection is full"
             );
         }
+        _;
+    }
 
-        unchecked {
-            if (hasMinted[msg.sender]) {
-                require(
-                    msg.value >= _quantity * price,
-                    "Sent Ether is too low"
-                );
-                _safeMint(msg.sender, _quantity);
+    // Minting
+    function mint(uint256 _quantity)
+        external
+        payable
+        mintCompliance(_quantity)
+    {
+        uint256 requiredValue = _quantity * price;
+        uint64 userMinted = _getAux(msg.sender);
+
+        if (userMinted == 0) {
+            if (_quantity <= maxFree) {
+                requiredValue = 0;
             } else {
-                if (_quantity <= maxFree) {
-                    _safeMint(msg.sender, _quantity);
-                    hasMinted[msg.sender] = true;
-                    return;
-                }
-                if (_quantity > maxFree) {
-                    require(msg.value >= (_quantity - maxFree) * price);
-                    _safeMint(msg.sender, _quantity);
-                    hasMinted[msg.sender] = true;
-                    return;
-                }
+                requiredValue -= (price * maxFree);
             }
         }
+        userMinted += uint64(_quantity);
+        _setAux(msg.sender, userMinted);
+
+        require(msg.value >= requiredValue, "Insufficient funds");
+
+        _safeMint(msg.sender, _quantity);
     }
 
     // TokenURIs

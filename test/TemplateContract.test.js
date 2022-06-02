@@ -119,6 +119,8 @@ describe("TemplateContract", function () {
       await contract.setMaxFree(3);
       await contract.mint(1);
     });
+
+    it("", async function () {});
   });
 
   describe("Transfering", function () {
@@ -171,8 +173,6 @@ describe("TemplateContract", function () {
       expect(await contract.maxMintPerTx()).to.equal(newMaxPerTx);
     });
     it("should revert if not changing the maxMintPerTx", async function () {
-      console.log(await contract.maxMintPerTx());
-      console.log(config.maxMintPerTx);
       await expect(
         contract.setMaxMintPerTx(config.maxMintPerTx)
       ).to.be.revertedWith("Already set to this value");
