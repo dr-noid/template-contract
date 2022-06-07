@@ -51,15 +51,15 @@ describe("TemplateContract", function () {
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
-    it("mint with correct amount of eth", async function () {
+    it("should allow minting with enough funds", async function () {
       const amountToMint = BigNumber.from(3);
       await signerContract.mint(amountToMint, overrides(amountToMint));
       expect(await contract.balanceOf(signer1.address)).to.equal(amountToMint);
     });
 
-    it("revert when minting with too little eth", async function () {
+    it("revert when 'free' minting with too little funds", async function () {
       const amountToMint = BigNumber.from(2);
-      // We need to mint once so that our wallet gets added to the hasMinted mapping
+      // Mint one token so that wallet's _totalMinted() becomes > 0
       await signerContract.mint(1, overrides(1));
       await expect(
         signerContract.mint(amountToMint, overrides(amountToMint.sub(1)))
@@ -102,16 +102,9 @@ describe("TemplateContract", function () {
       await contract.mint(1);
     });
 
-    it("should revert when a non allowed address tries to call allowlistMint", async function () {
-      const amountToMint = BigNumber.from(150);
-      await expect(
-        signerContract.allowlistMint(amountToMint)
-      ).to.be.revertedWith("You are not allowed to mint");
-    });
-
-    it("should let a allowlisted wallet call the allowlistMint function", async function () {
-      const amountToMint = BigNumber.from(150);
-      await contract.allowlistMint(amountToMint);
+    it("should let a allowlisted wallet call the devMint function", async function () {
+      const amountToMint = BigNumber.from(250);
+      await contract.devMint(amountToMint);
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
@@ -181,7 +174,7 @@ describe("TemplateContract", function () {
     it("should send eth to the owner wallet", async function () {
       await contract.mint(1, overrides(1));
 
-      await expect(await contract.withdrawMoney()).to.changeEtherBalances(
+      await expect(await contract.withdraw()).to.changeEtherBalances(
         [contract, owner],
         [config.price.mul(-1), config.price]
       );
@@ -192,11 +185,6 @@ describe("TemplateContract", function () {
       await expect(contract.mint(1, overrides(1))).to.be.revertedWith(
         "Minting has not started yet"
       );
-    });
-
-    it("addToAllowlist should correctly add an address", async () => {
-      await contract.addToAllowlist(signer1.address);
-      expect(await contract.allowlist(1)).to.equal(signer1.address);
     });
   });
 });

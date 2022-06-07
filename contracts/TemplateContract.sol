@@ -12,7 +12,6 @@ contract TemplateContract is ERC721A, Ownable {
     string public baseUri;
     bool public open = false;
     uint256 public maxFree;
-    address[] public allowlist;
 
     constructor(
         string memory _name,
@@ -26,7 +25,6 @@ contract TemplateContract is ERC721A, Ownable {
         maxMintPerTx = _maxMintPerTx;
         collectionSize = _collectionSize;
         maxFree = _maxFree;
-        allowlist.push(owner());
     }
 
     // Events
@@ -53,7 +51,7 @@ contract TemplateContract is ERC721A, Ownable {
         mintCompliance(_quantity)
     {
         uint256 requiredValue = _quantity * price;
-        uint64 userMinted = _getAux(msg.sender);
+        uint256 userMinted = _numberMinted(msg.sender);
 
         if (userMinted == 0) {
             if (_quantity <= maxFree) {
@@ -62,11 +60,8 @@ contract TemplateContract is ERC721A, Ownable {
                 requiredValue -= (price * maxFree);
             }
         }
-        userMinted += uint64(_quantity);
-        _setAux(msg.sender, userMinted);
 
-        require(msg.value >= requiredValue, "Insufficient funds");
-
+        require(msg.value >= requiredValue, "Sent Ether is too low");
         _safeMint(msg.sender, _quantity);
     }
 
@@ -105,28 +100,7 @@ contract TemplateContract is ERC721A, Ownable {
         maxFree = _newMaxFree;
     }
 
-    // Allowlist
-    function addToAllowlist(address _address) external onlyOwner {
-        allowlist.push(_address);
-    }
-
-    function withdrawMoney() external onlyOwner {
-        (bool success, ) = msg.sender.call{value: address(this).balance}("");
-        require(success, "Transfer failed.");
-    }
-
-    function allowlistMint(uint256 _quantity) external {
-        address[] memory _allowlist = allowlist;
-        bool allowed = false;
-        unchecked {
-            for (uint256 i = 0; i < _allowlist.length; i++) {
-                if (_allowlist[i] == msg.sender) {
-                    allowed = true;
-                    break;
-                }
-            }
-        }
-        require(allowed, "You are not allowed to mint");
+    function devMint(uint256 _quantity) external onlyOwner {
         require(
             _totalMinted() + _quantity <= collectionSize,
             "Collection is full"
@@ -134,7 +108,12 @@ contract TemplateContract is ERC721A, Ownable {
         _safeMint(msg.sender, _quantity);
     }
 
-    // Overrides from ERC721A
+    function withdraw() external onlyOwner {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        require(success, "Transfer failed.");
+    }
+
+    // ERC721A overrides
     // ERC721A starts counting tokenIds from 0, this contract starts from 1
     function _startTokenId() internal pure override returns (uint256) {
         return 1;
