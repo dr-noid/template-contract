@@ -98,19 +98,23 @@ describe("TemplateContract", function () {
     });
 
     it("should allow minting for free when the price is zero", async function () {
+      let amountToMint = BigNumber.from(1);
       await contract.setPrice(0);
-      await contract.mint(1);
+      await contract.mint(amountToMint);
+      expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
-    it("should let a allowlisted wallet call the devMint function", async function () {
+    it("should let the owner wallet call the devMint function", async function () {
       const amountToMint = BigNumber.from(250);
       await contract.devMint(amountToMint);
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
     it("minting less than the maxFree limit shouldn't fail", async function () {
+      let amountToMint = BigNumber.from(1);
       await contract.setMaxFree(3);
-      await contract.mint(1);
+      await contract.mint(amountToMint);
+      expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
     it("", async function () {});

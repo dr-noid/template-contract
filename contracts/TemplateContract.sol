@@ -35,7 +35,7 @@ contract TemplateContract is ERC721A, Ownable {
         unchecked {
             require(open, "Minting has not started yet");
             require(_quantity <= maxMintPerTx, "Quantity is too large");
-            require(_quantity > 0, "Must mint at least 1 token");
+            require(_quantity != 0, "Must mint at least 1 token");
             require(
                 _totalMinted() + _quantity <= collectionSize,
                 "Collection is full"
@@ -54,11 +54,9 @@ contract TemplateContract is ERC721A, Ownable {
         uint256 userMinted = _numberMinted(msg.sender);
 
         if (userMinted == 0) {
-            if (_quantity <= maxFree) {
-                requiredValue = 0;
-            } else {
-                requiredValue -= (price * maxFree);
-            }
+            requiredValue = _quantity <= maxFree
+                ? 0
+                : requiredValue - (price * maxFree);
         }
 
         require(msg.value >= requiredValue, "Sent Ether is too low");
@@ -86,8 +84,6 @@ contract TemplateContract is ERC721A, Ownable {
     }
 
     function setBaseURI(string calldata _newBaseURI) external onlyOwner {
-        // We don't bother checking if the URI is already set to this value
-        // It's just unnecessary gas usage as the owner can check this manually
         baseUri = _newBaseURI;
     }
 
