@@ -3,7 +3,11 @@ require("dotenv").config();
 const { execSync } = require("child_process");
 
 async function main() {
+  const mainnet = false;
   const limit = Number(process.argv[2]);
+  const network = process.argv[3];
+  mainnet = network === "mainnet";
+
   if (isNaN(limit)) {
     console.error("Invalid limit");
     process.exit(1);
@@ -27,7 +31,11 @@ async function main() {
 
   function deploy() {
     console.log("deploying now: ");
-    execSync("npm run testdeploy");
+    if (mainnet) {
+      execSync("npm run deploy");
+    } else {
+      execSync("npm run testdeploy");
+    }
   }
 
   async function checkGas() {
