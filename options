@@ -1,7 +1,7 @@
 contractName=TemplateContract
 name=Template
 symbol=TMPLT
-price=80000000000000000
+price=0.005
 maxMintPerTx=5
 collectionSize=5000
 maxFree=2
