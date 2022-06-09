@@ -3,7 +3,7 @@ require("dotenv").config();
 const { execSync } = require("child_process");
 
 async function main() {
-  const mainnet = false;
+  let mainnet = false;
   const limit = Number(process.argv[2]);
   const network = process.argv[3];
   mainnet = network === "mainnet";
@@ -42,8 +42,11 @@ async function main() {
     let gas = await getGasInGwei();
     console.log(gas);
     if (gas < limit) {
-      deploy();
-      process.exit(1);
+      try {
+        deploy();
+      } finally {
+        process.exit(1);
+      }
     }
   }
 }
