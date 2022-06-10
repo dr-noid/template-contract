@@ -13,6 +13,7 @@ async function main() {
     process.exit(1);
   }
   console.log(`Waiting for gas to hit ${limit} gwei...`);
+  console.log(`deploy on mainnet: ${mainnet}`);
 
   const provider = ethers.getDefaultProvider("mainnet", {
     alchemy: process.env.ALCHEMY_API_KEY,
