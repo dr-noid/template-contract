@@ -3,8 +3,8 @@ const fs = require("fs");
 const config = require("../configuration");
 const glob = require("glob");
 
-const contractDefinition = "contract ";
-const newContractDefinition = `contract ${config.contractName}`;
+const contractDefinition = "contract (.*) is";
+const newContractDefinition = `contract ${config.contractName} is`;
 
 glob("contracts/**/*.sol", null, function (err, files) {
   files.forEach((file) => {
@@ -16,5 +16,4 @@ glob("contracts/**/*.sol", null, function (err, files) {
 
     fs.writeFileSync(file, updatedContent);
   });
-  console.log(files);
 });
