@@ -2,12 +2,44 @@ const { ethers } = require("ethers");
 require("dotenv").config();
 const { execSync } = require("child_process");
 
-async function main() {
-  let mainnet = false;
-  const limit = Number(process.argv[2]);
-  const network = process.argv[3];
-  mainnet = network === "mainnet";
+const provider = ethers.getDefaultProvider("mainnet", {
+  alchemy: process.env.ALCHEMY_API_KEY,
+  etherscan: process.env.ETHERSCAN_API_KEY,
+});
 
+const updateConsole = (gas) => {
+  process.stdout.clearLine(0);
+  process.stdout.cursorTo(0);
+  process.stdout.write(`gas: ${gas}`);
+};
+
+async function getGasInGwei() {
+  return ethers.utils.formatUnits(await provider.getGasPrice(), "gwei");
+}
+
+async function checkGas() {
+  let gas = await getGasInGwei();
+  updateConsole(gas);
+  if (gas < limit) {
+    try {
+      console.log("");
+      deploy();
+    } finally {
+      process.exit(1);
+    }
+  }
+}
+
+function deploy() {
+  const npmScript = mainnet ? "npm run deploy" : "npm run testdeploy";
+  console.log(`deploying now: ${npmScript}`);
+  execSync(npmScript, { stdio: "inherit" });
+}
+
+const limit = Number(process.argv[2]);
+const mainnet = process.argv[3] === "mainnet";
+
+async function main() {
   if (isNaN(limit)) {
     console.error("Invalid limit");
     process.exit(1);
@@ -15,41 +47,11 @@ async function main() {
   console.log(`Waiting for gas to hit ${limit} gwei...`);
   console.log(`deploy on mainnet: ${mainnet}`);
 
-  const provider = ethers.getDefaultProvider("mainnet", {
-    alchemy: process.env.ALCHEMY_API_KEY,
-    etherscan: process.env.ETHERSCAN_API_KEY,
-  });
-
-  async function getGasInGwei() {
-    return ethers.utils.formatUnits(await provider.getGasPrice(), "gwei");
-  }
-
   await new Promise((resolve, reject) => {
     provider.on("block", () => {
       checkGas();
     });
   });
-
-  function deploy() {
-    console.log("deploying now: ");
-    if (mainnet) {
-      execSync("npm run deploy");
-    } else {
-      execSync("npm run testdeploy");
-    }
-  }
-
-  async function checkGas() {
-    let gas = await getGasInGwei();
-    console.log(gas);
-    if (gas < limit) {
-      try {
-        deploy();
-      } finally {
-        process.exit(1);
-      }
-    }
-  }
 }
 
 main()
