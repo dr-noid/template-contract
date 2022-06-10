@@ -15,5 +15,7 @@ glob("contracts/**/*.sol", null, function (err, files) {
     );
 
     fs.writeFileSync(file, updatedContent);
+
+    fs.renameSync(file, `contracts/${config.contractName}.sol`);
   });
 });
