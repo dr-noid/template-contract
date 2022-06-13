@@ -107,9 +107,9 @@ describe("TemplateContract", function () {
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
-    it("should let the owner wallet call the devMint function", async function () {
+    it("should let the owner wallet call the allowlistMint function", async function () {
       const amountToMint = BigNumber.from(250);
-      await contract.devMint(amountToMint);
+      await contract.allowlistMint(amountToMint);
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
