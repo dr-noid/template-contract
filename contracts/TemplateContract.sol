@@ -93,7 +93,7 @@ contract TemplateContract is ERC721A, Ownable {
         maxFree = _newMaxFree;
     }
 
-    function devMint(uint256 _quantity) external onlyOwner {
+    function allowlistMint(uint256 _quantity) external onlyOwner {
         require(
             _totalMinted() + _quantity <= collectionSize,
             "Collection is full"
