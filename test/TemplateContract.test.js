@@ -2,56 +2,47 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const config = require("../configuration");
+const { deployContract } = require("./helpers");
 
-describe("TemplateContract", async function () {
-  let Contract;
+describe("TemplateContract", function () {
   let contract;
   let owner;
   let signer1;
   let signer2;
   let signers;
 
-  const contractName = config.contractName;
-  const name = config.name;
-  const symbol = config.symbol;
-  const price = config.price;
-  const maxMintPerTx = config.maxMintPerTx;
-  const collectionSize = config.collectionSize;
-
   const overrides = function (amount) {
-    return { value: BigNumber.from(price).mul(amount) };
+    return { value: BigNumber.from(config.price).mul(amount) };
   };
 
   beforeEach(async function () {
-    Contract = await ethers.getContractFactory(contractName);
     [owner, signer1, signer2, ...signers] = await ethers.getSigners();
-    contract = await Contract.deploy(
-      name,
-      symbol,
-      price,
-      maxMintPerTx,
-      collectionSize
-    );
-    await contract.deployed();
+    contract = await deployContract();
     await contract.setOpen(true);
   });
 
-  describe("Deployment", async function () {
+  describe("Deployment", function () {
     it("should set the correct state variables", async function () {
       expect(await contract.owner()).to.equal(owner.address);
-      expect(await contract.name()).to.equal(name);
-      expect(await contract.symbol()).to.equal(symbol);
-      expect(await contract.price()).to.equal(price);
-      expect(await contract.maxMintPerTx()).to.equal(maxMintPerTx);
-      expect(await contract.collectionSize()).to.equal(collectionSize);
+      expect(await contract.name()).to.equal(config.name);
+      expect(await contract.symbol()).to.equal(config.symbol);
+      expect(await contract.price()).to.equal(config.price);
+      expect(await contract.maxMintPerTx()).to.equal(config.maxMintPerTx);
+      expect(await contract.collectionSize()).to.equal(config.collectionSize);
+      expect(await contract.maxFree()).to.equal(config.maxFree);
     });
   });
 
-  describe("Minting", async function () {
+  describe("Minting", function () {
     let signerContract;
 
     beforeEach(async function () {
       signerContract = await contract.connect(signer1);
+    });
+
+    it("First mint should be free", async function () {
+      const amountToMint = BigNumber.from(1);
+      await signerContract.mint(amountToMint);
     });
 
     it("mint from owner wallet with correct amount of eth", async function () {
@@ -60,103 +51,109 @@ describe("TemplateContract", async function () {
       expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
 
-    it("mint with correct amount of eth", async function () {
+    it("should allow minting with enough funds", async function () {
       const amountToMint = BigNumber.from(3);
       await signerContract.mint(amountToMint, overrides(amountToMint));
       expect(await contract.balanceOf(signer1.address)).to.equal(amountToMint);
     });
 
-    it("revert when minting with too little eth", async function () {
+    it("revert when 'free' minting with too little funds", async function () {
       const amountToMint = BigNumber.from(2);
+      // Mint one token so that wallet's _totalMinted() becomes > 0
+      await signerContract.mint(1, overrides(1));
       await expect(
         signerContract.mint(amountToMint, overrides(amountToMint.sub(1)))
       ).to.be.revertedWith("Sent Ether is too low");
     });
 
     it("shouldn't allow minting over the maxMintPerTx", async function () {
-      const amountToMint = maxMintPerTx + 1;
+      const amountToMint = config.maxMintPerTx + 1;
       await expect(
         contract.mint(amountToMint, overrides(amountToMint))
       ).to.be.revertedWith("Quantity is too large");
     });
 
-    it("shouldn't allow minting over the collectionSize", async function () {
-      // We deploy the contract again but this time the maxMintPerTx
-      // is set to the collectionSize so the test runs faster
-      const customContract = await Contract.deploy(
-        name,
-        symbol,
-        price,
-        collectionSize,
-        collectionSize
-      );
+    /**
+     * Deploy a new contract and set the maxMintPerTx to the collectionSize
+     * This makes the test run much faster
+     */
+    it("should allow minting over the collectionSize, but not mint another token", async function () {
+      const newArgs = [...config.constructorArgs]; // Copy the constructorArgs
+      // Set the newArgs's maxMintPerTx to the collectionSize
+      newArgs[3] = config.collectionSize;
+      const customContract = await deployContract(newArgs);
       await customContract.deployed();
       await customContract.setOpen(true);
 
-      const customSignerContract = await customContract.connect(signer1);
+      const customSignerContract = customContract.connect(signer1);
 
       await customSignerContract.mint(
-        collectionSize,
-        overrides(collectionSize)
+        config.collectionSize,
+        overrides(config.collectionSize)
       );
 
       await expect(
-        customSignerContract.mint(1, overrides(1))
-      ).to.be.revertedWith("Collection is full");
-    });
-
-    it("should allow minting for free when it's enabled", async function () {
-      await contract.setPrice(0);
-      await contract.mint(1);
-    });
-
-    it("should revert when a non allowed address tries to call allowListMint", async function () {
-      await expect(signerContract.allowListMint()).to.be.revertedWith(
-        "You are not allowed to mint"
+        await customSignerContract.mint(1, overrides(1))
+      ).to.changeEtherBalances(
+        [customContract, signer1],
+        [config.price.mul(1), config.price.mul(-1)]
       );
     });
 
-    it("should let a allowlisted wallet call the allowListMint function", async function () {
-      // console.log(owner.address);
-      // console.log(await contract.owner());
-
-      await contract.allowListMint();
-
-      expect(await contract.balanceOf(owner.address)).to.be.above(1);
+    it("should allow minting for free when the price is zero", async function () {
+      let amountToMint = BigNumber.from(1);
+      await contract.setPrice(0);
+      await contract.mint(amountToMint);
+      expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
     });
+
+    it("should let the owner wallet call the devMint function", async function () {
+      const amountToMint = BigNumber.from(250);
+      await contract.devMint(amountToMint);
+      expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
+    });
+
+    it("minting less than the maxFree limit shouldn't fail", async function () {
+      let amountToMint = BigNumber.from(1);
+      await contract.setMaxFree(3);
+      await contract.mint(amountToMint);
+      expect(await contract.balanceOf(owner.address)).to.equal(amountToMint);
+    });
+
+    it("", async function () {});
   });
 
-  describe("Transfering", async function () {
+  describe("Transfering", function () {
     // We need atleast one token to transfer
-    const tokenId = 1;
+    const amountToMint = 1;
     beforeEach(async function () {
-      await contract.mint(tokenId, { value: price });
+      await contract.mint(amountToMint, overrides(amountToMint));
     });
 
-    // Transfering is handled almost completely by the ERC721A contract.
+    // Transfering is handled completely by ERC721A (it's part of the ERC-721 specification).
     it("should transfer one token to another address", async function () {
-      await contract.transfer(signer1.address, tokenId);
-      expect(await contract.balanceOf(signer1.address)).to.equal(1);
-      expect(await contract.ownerOf(tokenId)).to.equal(signer1.address);
+      await contract.transferFrom(owner.address, signer1.address, amountToMint);
+      expect(await contract.balanceOf(signer1.address)).to.equal(amountToMint);
+      expect(await contract.ownerOf(amountToMint)).to.equal(signer1.address);
     });
   });
 
-  describe("tokenURIs", async function () {
+  describe("tokenURIs", function () {
     const testURI = "https://example.com/";
+    const amountToMint = 1;
     beforeEach(async function () {
       // We need some tokens to get tokenURIs
-      await contract.mint(maxMintPerTx, overrides(maxMintPerTx));
+      await contract.mint(amountToMint, overrides(amountToMint));
       await contract.setBaseURI(testURI);
     });
     it("get the correct URI for a given token", async function () {
-      const tokenId = 1;
-      expect(await contract.tokenURI(tokenId)).to.equal(
-        `${testURI}${tokenId}.json`
+      expect(await contract.tokenURI(amountToMint)).to.equal(
+        `${testURI}${amountToMint}.json`
       );
     });
   });
 
-  describe("Utils", async function () {
+  describe("Utils", function () {
     it("should change the price", async function () {
       const newPrice = ethers.utils.parseEther("0.1");
       await contract.setPrice(newPrice);
@@ -164,7 +161,7 @@ describe("TemplateContract", async function () {
       expect(await contract.price()).to.equal(newPrice);
     });
     it("should revert if not changing the price", async function () {
-      await expect(contract.setPrice(price)).to.be.revertedWith(
+      await expect(contract.setPrice(config.price)).to.be.revertedWith(
         "Already set to this value"
       );
     });
@@ -176,17 +173,17 @@ describe("TemplateContract", async function () {
       expect(await contract.maxMintPerTx()).to.equal(newMaxPerTx);
     });
     it("should revert if not changing the maxMintPerTx", async function () {
-      await expect(contract.setMaxMintPerTx(maxMintPerTx)).to.be.revertedWith(
-        "Already set to this value"
-      );
+      await expect(
+        contract.setMaxMintPerTx(config.maxMintPerTx)
+      ).to.be.revertedWith("Already set to this value");
     });
 
     it("should send eth to the owner wallet", async function () {
       await contract.mint(1, overrides(1));
 
-      await expect(await contract.withdrawMoney()).to.changeEtherBalances(
+      await expect(await contract.withdraw()).to.changeEtherBalances(
         [contract, owner],
-        [price.mul(-1), price]
+        [config.price.mul(-1), config.price]
       );
     });
 
@@ -195,11 +192,6 @@ describe("TemplateContract", async function () {
       await expect(contract.mint(1, overrides(1))).to.be.revertedWith(
         "Minting has not started yet"
       );
-    });
-
-    it("addToAllowList should correctly add an address", async () => {
-      await contract.addToAllowList(signer1.address);
-      expect(await contract.allowList(1)).to.equal(signer1.address);
     });
   });
 });

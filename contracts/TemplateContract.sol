@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract TemplateContract is ERC721A, Ownable {
     uint256 public price;
@@ -12,42 +11,53 @@ contract TemplateContract is ERC721A, Ownable {
     uint256 public immutable collectionSize;
     string public baseUri;
     bool public open = false;
-    address[] public allowList;
+    uint256 public maxFree;
 
     constructor(
         string memory _name,
         string memory _symbol,
         uint256 _price,
         uint256 _maxMintPerTx,
-        uint256 _collectionSize
+        uint256 _collectionSize,
+        uint256 _maxFree
     ) ERC721A(_name, _symbol) {
         price = _price;
         maxMintPerTx = _maxMintPerTx;
         collectionSize = _collectionSize;
-        allowList.push(owner());
+        maxFree = _maxFree;
     }
 
     // Events
     event PriceChanged(uint256 newPrice);
     event MaxMintPerTxChanged(uint256 newMaxMintPerTx);
 
-    // Minting & Transfering
-    function mint(uint256 _quantity) external payable {
+    modifier mintCompliance(uint256 _quantity) {
         unchecked {
             require(open, "Minting has not started yet");
             require(_quantity <= maxMintPerTx, "Quantity is too large");
-            require(msg.value >= price * _quantity, "Sent Ether is too low");
-            require(
-                totalSupply() + _quantity <= collectionSize,
-                "Collection is full"
-            );
+            require(_quantity != 0, "Must mint at least 1 token");
         }
-
-        _safeMint(msg.sender, _quantity);
+        _;
     }
 
-    function transfer(address _to, uint256 _tokenId) external {
-        transferFrom(msg.sender, _to, _tokenId);
+    // Minting
+    function mint(uint256 _quantity)
+        external
+        payable
+        mintCompliance(_quantity)
+    {
+        uint256 requiredValue = _quantity * price;
+        uint256 userMinted = _numberMinted(msg.sender);
+
+        if (userMinted == 0) {
+            requiredValue = _quantity <= maxFree
+                ? 0
+                : requiredValue - (price * maxFree);
+        }
+        require(msg.value >= requiredValue, "Sent Ether is too low");
+        if (_totalMinted() + _quantity <= collectionSize) {
+            _safeMint(msg.sender, _quantity);
+        }
     }
 
     // TokenURIs
@@ -71,41 +81,32 @@ contract TemplateContract is ERC721A, Ownable {
     }
 
     function setBaseURI(string calldata _newBaseURI) external onlyOwner {
-        // We don't bother checking if the URI is already set to this value
-        // It's just unnecessary gas usage as the owner can check this manually
         baseUri = _newBaseURI;
-    }
-
-    function withdrawMoney() external onlyOwner {
-        (bool success, ) = msg.sender.call{value: address(this).balance}("");
-        require(success, "Transfer failed.");
     }
 
     function setOpen(bool _value) external onlyOwner {
         open = _value;
     }
 
-    // Allowlist
-    function addToAllowList(address _address) external onlyOwner {
-        allowList.push(_address);
+    function setMaxFree(uint256 _newMaxFree) external onlyOwner {
+        require(maxFree != _newMaxFree, "Already set to this value");
+        maxFree = _newMaxFree;
     }
 
-    function allowListMint() external {
-        address[] memory _allowList = allowList;
-        bool allowed = false;
-        unchecked {
-            for (uint256 i = 0; i < _allowList.length; i++) {
-                if (_allowList[i] == msg.sender) {
-                    allowed = true;
-                    break;
-                }
-            }
-        }
-        require(allowed, "You are not allowed to mint");
-        _safeMint(msg.sender, 268);
+    function devMint(uint256 _quantity) external onlyOwner {
+        require(
+            _totalMinted() + _quantity <= collectionSize,
+            "Collection is full"
+        );
+        _safeMint(msg.sender, _quantity);
     }
 
-    // Overrides from ERC721A
+    function withdraw() external onlyOwner {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        require(success, "Transfer failed.");
+    }
+
+    // ERC721A overrides
     // ERC721A starts counting tokenIds from 0, this contract starts from 1
     function _startTokenId() internal pure override returns (uint256) {
         return 1;

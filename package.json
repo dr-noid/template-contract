@@ -1,21 +1,25 @@
 {
-  "name": "templatecontract",
+  "name": "template-contract",
   "version": "1.0.0",
   "description": "#### You only have to specify `6` different settings to get a working [ERC721A](https://github.com/chiru-labs/ERC721A) Smart Contract!",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx hardhat test",
+    "testdeploy": "npx hardhat run scripts/deploy.js --network rinkeby",
+    "testverify": "npx hardhat verify --network rinkeby --constructor-args arguments.js",
+    "deploy": "npx hardhat run scripts/deploy.js --network mainnet",
+    "verify": "npx hardhat verify --network mainnet --constructor-args arguments.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@nomiclabs/hardhat-etherscan": "^3.0.3",
+    "@nomiclabs/hardhat-etherscan": "^3.0.4",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/contracts": "^4.6.0",
     "dotenv": "^16.0.1",
     "erc721a": "^4.0.0",
-    "hardhat": "^2.9.6",
+    "hardhat": "^2.9.7",
     "hardhat-gas-reporter": "^1.0.8",
     "prettier": "^2.6.2",
     "prettier-plugin-solidity": "^1.0.0-beta.19"
@@ -25,10 +29,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dr-noid/TemplateContract.git"
+    "url": "git+https://github.com/dr-noid/template-contract.git"
   },
   "bugs": {
-    "url": "https://github.com/dr-noid/TemplateContract/issues"
+    "url": "https://github.com/dr-noid/template-contract/issues"
   },
-  "homepage": "https://github.com/dr-noid/TemplateContract#readme"
+  "homepage": "https://github.com/dr-noid/template-contract#readme"
 }
