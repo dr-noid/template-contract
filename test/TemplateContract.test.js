@@ -77,7 +77,7 @@ describe("TemplateContract", function () {
      * Deploy a new contract and set the maxMintPerTx to the collectionSize
      * This makes the test run much faster
      */
-    it("shouldn't allow minting over the collectionSize", async function () {
+    it("should allow minting over the collectionSize, but not mint another token", async function () {
       const newArgs = [...config.constructorArgs]; // Copy the constructorArgs
       // Set the newArgs's maxMintPerTx to the collectionSize
       newArgs[3] = config.collectionSize;
@@ -93,8 +93,11 @@ describe("TemplateContract", function () {
       );
 
       await expect(
-        customSignerContract.mint(1, overrides(1))
-      ).to.be.revertedWith("Collection is full");
+        await customSignerContract.mint(1, overrides(1))
+      ).to.changeEtherBalances(
+        [customContract, signer1],
+        [config.price.mul(1), config.price.mul(-1)]
+      );
     });
 
     it("should allow minting for free when the price is zero", async function () {

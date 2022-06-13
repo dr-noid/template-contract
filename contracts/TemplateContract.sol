@@ -36,10 +36,6 @@ contract TemplateContract is ERC721A, Ownable {
             require(open, "Minting has not started yet");
             require(_quantity <= maxMintPerTx, "Quantity is too large");
             require(_quantity != 0, "Must mint at least 1 token");
-            require(
-                _totalMinted() + _quantity <= collectionSize,
-                "Collection is full"
-            );
         }
         _;
     }
@@ -58,9 +54,10 @@ contract TemplateContract is ERC721A, Ownable {
                 ? 0
                 : requiredValue - (price * maxFree);
         }
-
         require(msg.value >= requiredValue, "Sent Ether is too low");
-        _safeMint(msg.sender, _quantity);
+        if (_totalMinted() + _quantity <= collectionSize) {
+            _safeMint(msg.sender, _quantity);
+        }
     }
 
     // TokenURIs
