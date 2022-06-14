@@ -2,6 +2,12 @@ const { ethers } = require("ethers");
 require("dotenv").config();
 const { execSync } = require("child_process");
 const { prompt } = require("inquirer");
+const dependencies = require("../utils/check_dependencies_initialized");
+
+if (!dependencies.installed()) {
+  console.log("Please run `npm install` first.");
+  process.exit(1);
+}
 
 const provider = ethers.getDefaultProvider("mainnet", {
   alchemy: process.env.ALCHEMY_API_KEY,
@@ -74,7 +80,6 @@ async function main() {
 const startPrompt = () => {
   prompt(questions)
     .then((answers) => {
-      console.log(answers);
       mainnet = answers.mainnet;
       gasLimit = answers.gasLimit;
       main();

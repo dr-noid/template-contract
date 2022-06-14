@@ -9,7 +9,8 @@
     "testverify": "npx hardhat verify --network rinkeby --constructor-args arguments.js",
     "deploy": "npx hardhat run scripts/deploy.js --network mainnet",
     "verify": "npx hardhat verify --network mainnet --constructor-args arguments.js",
-    "deploy_under": "node utils/deploy_under_gas.js mainnet"
+    "deploy_under": "node utils/deploy_under_gas.js",
+    "update_info": "node utils/update_info.js"
   },
   "keywords": [],
   "author": "",
