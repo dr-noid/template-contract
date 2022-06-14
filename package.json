@@ -8,7 +8,8 @@
     "testdeploy": "npx hardhat run scripts/deploy.js --network rinkeby",
     "testverify": "npx hardhat verify --network rinkeby --constructor-args arguments.js",
     "deploy": "npx hardhat run scripts/deploy.js --network mainnet",
-    "verify": "npx hardhat verify --network mainnet --constructor-args arguments.js"
+    "verify": "npx hardhat verify --network mainnet --constructor-args arguments.js",
+    "deploy_under": "node utils/deploy_under_gas.js mainnet"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "erc721a": "^4.0.0",
     "hardhat": "^2.9.7",
     "hardhat-gas-reporter": "^1.0.8",
+    "inquirer": "^8.2.4",
     "prettier": "^2.6.2",
     "prettier-plugin-solidity": "^1.0.0-beta.19"
   },
