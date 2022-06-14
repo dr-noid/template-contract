@@ -1,11 +1,30 @@
 const { ethers } = require("ethers");
 require("dotenv").config();
 const { execSync } = require("child_process");
+const { prompt } = require("inquirer");
 
 const provider = ethers.getDefaultProvider("mainnet", {
   alchemy: process.env.ALCHEMY_API_KEY,
   etherscan: process.env.ETHERSCAN_API_KEY,
 });
+
+const questions = [
+  {
+    type: "confirm",
+    name: "mainnet",
+    default: false,
+    message: "Deploy to mainnet?",
+  },
+  {
+    type: "input",
+    name: "gasLimit",
+    default: 20,
+    message: "Enter a gas limit:",
+  },
+];
+
+var mainnet;
+var gasLimit;
 
 const updateConsole = (gas) => {
   process.stdout.clearLine(0);
@@ -36,10 +55,8 @@ function deploy() {
   execSync(npmScript, { stdio: "inherit" });
 }
 
-const limit = Number(process.argv[2]);
-const mainnet = process.argv[3] === "mainnet";
-
 async function main() {
+  limit = Number(gasLimit);
   if (isNaN(limit)) {
     console.error("Invalid limit");
     process.exit(1);
@@ -54,9 +71,17 @@ async function main() {
   });
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+const startPrompt = () => {
+  prompt(questions)
+    .then((answers) => {
+      console.log(answers);
+      mainnet = answers.mainnet;
+      gasLimit = answers.gasLimit;
+      main();
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+};
+
+startPrompt();
